@@ -9,12 +9,17 @@ canvas.height = window.innerHeight;
 
 let t = 0; 
 const speed = 0.019; 
-const scale = 15; 
+
+// --- CORRECCIÓN: Escala adaptable según el tamaño de la pantalla ---
+// Si es celular usa escala 9 o 10, si es PC usa tus 15 originales automáticamente
+const esCelular = window.innerWidth < 768;
+const scale = esCelular ? Math.min(window.innerWidth / 40, 10) : 15; 
+
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
 ctx.strokeStyle = "#b91d1d"; 
-ctx.lineWidth = 12; 
+ctx.lineWidth = esCelular ? 8 : 12; // Línea un poco más delgada en celular para que luzca fino
 ctx.lineCap = "round";
 
 const estrellas = [];
@@ -23,61 +28,73 @@ const colorAmarilloFosforito = "#e3ff00";
 const corazonesFlotantes = [];
 const coloresCorazones = ["#ff4d6d", "#ff758f", "#ff8fa3", "#ffb3c1"];
 
-// Variable para controlar la opacidad global de entrada de todos los corazones flotantes
 let entradaCorazonesOpacity = 0;
 
 function inicializarCorazonesFlotantes() {
-    const desfasesY = [centerY + 120, centerY, centerY - 120]; 
+    // Ajustamos la separación vertical para móviles
+    const factorEspacioY = esCelular ? 70 : 120;
+    const desfasesY = [centerY + factorEspacioY, centerY, centerY - factorEspacioY]; 
     
-    // CAMBIO: Tamaños diferenciados por columna (Grande la interna, Pequeña la del medio, Mediana la externa)
-    const tamanosColumnas = [
-        [45, 35, 25], // Columna 0 (Interna): Corazones Grandes/Medianos
-        [22, 16, 12], // Columna 1 (Medio): ¡NUEVO! Corazones pequeños como pediste
-        [35, 25, 18]  // Columna 2 (Externa): Corazones Medianos/Chicos
-    ];
+    // Tamaños proporcionales a la pantalla para que no se vean gigantes en móviles
+    const tamanosColumnas = esCelular ? 
+        [
+            [26, 20, 16], // Interna
+            [14, 10, 8],  // Medio
+            [22, 16, 12]  // Externa
+        ] : 
+        [
+            [45, 35, 25], 
+            [22, 16, 12], 
+            [35, 25, 18]  
+        ];
     
-    // CAMBIO: Mayor separación entre columnas para que no se amontonen (de 60px pasamos a 90px de espacio)
+    // CORRECCIÓN: Separación horizontal adaptada al ancho del corazón en móvil
+    const separacionCol = esCelular ? 40 : 90;
+    const margenInicial = esCelular ? 20 : 40;
+
     const columnasIzquierda = [
-        centerX - (24 * scale) - 40,  // Columna interna
-        centerX - (24 * scale) - 130, // Columna del medio
-        centerX - (24 * scale) - 220  // Columna externa
+        centerX - (24 * scale) - margenInicial,  
+        centerX - (24 * scale) - margenInicial - separacionCol, 
+        centerX - (24 * scale) - margenInicial - (separacionCol * 2)  
     ];
     
     const columnasDerecha = [
-        centerX + (24 * scale) + 40,  // Columna interna
-        centerX + (24 * scale) + 130, // Columna del medio
-        centerX + (24 * scale) + 220  // Columna externa
+        centerX + (24 * scale) + margenInicial,  
+        centerX + (24 * scale) + margenInicial + separacionCol, 
+        centerX + (24 * scale) + margenInicial + (separacionCol * 2)  
     ];
 
     for (let col = 0; col < 3; col++) {
         for (let i = 0; i < 3; i++) {
             // Lado Izquierdo
             corazonesFlotantes.push({
-                x: columnasIzquierda[col] + (Math.random() * 20 - 10), 
-                y: desfasesY[i] + (Math.random() * 40 - 20), 
-                sizeBase: tamanosColumnas[col][i], // Asigna el tamaño según su columna
-                sizeActualBucle: tamanosColumnas[col][i], // Guarda una copia para el reinicio
+                x: columnasIzquierda[col] + (Math.random() * 10 - 5), 
+                y: desfasesY[i] + (Math.random() * 20 - 10), 
+                sizeBase: tamanosColumnas[col][i], 
+                sizeActualBucle: tamanosColumnas[col][i], 
                 color: coloresCorazones[Math.floor(Math.random() * coloresCorazones.length)],
-                velocidad: Math.random() * 0.6 + 0.5
+                velocidad: Math.random() * 0.6 + 0.5,
+                rotacion: (Math.random() * 30 - 15) * Math.PI / 180 
             });
             // Lado Derecho
             corazonesFlotantes.push({
-                x: columnasDerecha[col] + (Math.random() * 20 - 10), 
-                y: desfasesY[i] + (Math.random() * 40 - 20), 
+                x: columnasDerecha[col] + (Math.random() * 10 - 5), 
+                y: desfasesY[i] + (Math.random() * 20 - 10), 
                 sizeBase: tamanosColumnas[col][i], 
                 sizeActualBucle: tamanosColumnas[col][i],
                 color: coloresCorazones[Math.floor(Math.random() * coloresCorazones.length)],
-                velocidad: Math.random() * 0.6 + 0.5
+                velocidad: Math.random() * 0.6 + 0.5,
+                rotacion: (Math.random() * 30 - 15) * Math.PI / 180 
             });
         }
     }
 }
 
-function drawMiniHeart(fromX, fromY, size) {
+function drawMiniHeart(size) {
     ctx.beginPath();
-    ctx.moveTo(fromX, fromY - size * 0.25);
-    ctx.bezierCurveTo(fromX + size * 0.7, fromY - size * 0.9, fromX + size * 1.1, fromY - size * 0.1, fromX, fromY + size * 0.85);
-    ctx.bezierCurveTo(fromX - size * 1.1, fromY - size * 0.1, fromX - size * 0.7, fromY - size * 0.9, fromX, fromY - size * 0.25);
+    ctx.moveTo(0, -size * 0.25);
+    ctx.bezierCurveTo(size * 0.7, -size * 0.9, size * 1.1, -size * 0.1, 0, size * 0.85);
+    ctx.bezierCurveTo(-size * 1.1, -size * 0.1, -size * 0.7, -size * 0.9, 0, -size * 0.25);
     ctx.closePath();
     ctx.fill();
 }
@@ -86,7 +103,7 @@ function crearEstrella(x, y) {
     return {
         x: x,
         y: y,
-        size: Math.random() * 6 + 4, 
+        size: Math.random() * (esCelular ? 4 : 6) + 3, 
         anguloParpadeo: Math.random() * Math.PI * 2,
         velocidadParpadeo: Math.random() * 0.1 + 0.05
     };
@@ -138,7 +155,6 @@ function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // CAMBIO: El desvanecimiento de entrada comparte el mismo ritmo suave del título (0.01 por frame)
     if (entradaCorazonesOpacity < 1) {
         entradaCorazonesOpacity += 0.01; 
     }
@@ -146,7 +162,7 @@ function draw() {
     ctx.save();
     ctx.globalAlpha = 1;
     ctx.strokeStyle = "#b91d1d";
-    ctx.lineWidth = 12;
+    ctx.lineWidth = esCelular ? 8 : 12;
     ctx.lineCap = "round";
     
     ctx.beginPath();
@@ -184,7 +200,6 @@ function draw() {
         ctx.restore();
     });
 
-    // Renderizado de corazones flotantes laterales
     corazonesFlotantes.forEach(corazon => {
         corazon.y -= corazon.velocidad;
 
@@ -195,23 +210,27 @@ function draw() {
         if (porcentajeSubida < 0) porcentajeSubida = 0;
         if (porcentajeSubida > 1) porcentajeSubida = 1;
 
-        // Multiplicamos la opacidad de subida por la opacidad de entrada para que aparezcan suavemente al inicio
         let opacidadCorazon = (1 - porcentajeSubida) * entradaCorazonesOpacity;
         let tamanoActual = corazon.sizeBase * (1 - porcentajeSubida * 0.4);
 
         if (corazon.y <= limiteSuperior) {
             corazon.y = limiteInferior;
-            corazon.sizeBase = corazon.sizeActualBucle; // Mantiene su tamaño estructural asignado
+            corazon.sizeBase = corazon.sizeActualBucle; 
             opacidadCorazon = 1 * entradaCorazonesOpacity;
             tamanoActual = corazon.sizeActualBucle;
+            corazon.rotacion = (Math.random() * 30 - 15) * Math.PI / 180;
         }
 
         ctx.save();
+        ctx.translate(corazon.x, corazon.y);
+        ctx.rotate(corazon.rotacion);
+        
         ctx.globalAlpha = opacidadCorazon;
         ctx.fillStyle = corazon.color;
         ctx.shadowColor = corazon.color;
-        ctx.shadowBlur = 5;
-        drawMiniHeart(corazon.x, corazon.y, tamanoActual);
+        ctx.shadowBlur = esCelular ? 8 : 15; 
+        
+        drawMiniHeart(tamanoActual);
         ctx.restore();
     });
 
@@ -254,7 +273,7 @@ function fillHeart() {
     ctx.save();
     ctx.globalAlpha = 1;
     ctx.strokeStyle = "#b91d1d";
-    ctx.lineWidth = 12;
+    ctx.lineWidth = esCelular ? 8 : 12;
     ctx.beginPath();
     for (let i = 0; i <= 2 * Math.PI + speed; i += speed) {
         let tempX = 16 * Math.pow(Math.sin(i), 3);
@@ -297,14 +316,19 @@ function fillHeart() {
             corazon.sizeBase = corazon.sizeActualBucle; 
             opacidadCorazon = 1 * entradaCorazonesOpacity;
             tamanoActual = corazon.sizeActualBucle;
+            corazon.rotacion = (Math.random() * 30 - 15) * Math.PI / 180;
         }
 
         ctx.save();
+        ctx.translate(corazon.x, corazon.y);
+        ctx.rotate(corazon.rotacion);
+        
         ctx.globalAlpha = opacidadCorazon;
         ctx.fillStyle = corazon.color;
         ctx.shadowColor = corazon.color;
-        ctx.shadowBlur = 5;
-        drawMiniHeart(corazon.x, corazon.y, tamanoActual);
+        ctx.shadowBlur = esCelular ? 8 : 15; 
+        
+        drawMiniHeart(tamanoActual);
         ctx.restore();
     });
 
