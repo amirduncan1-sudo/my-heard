@@ -76,6 +76,18 @@
             50% { transform: scale(1.08); box-shadow: 0 4px 25px rgba(255, 77, 109, 0.8); }
             100% { transform: scale(1); box-shadow: 0 4px 15px rgba(185, 29, 29, 0.5); }
         }
+/* --- NUEVO: Ajuste dinámico para pantallas de celular --- */
+@media (max-width: 768px) {
+    #tituloElegante {
+        font-size: 30px; /* Letra un poco más pequeña en celular para que no sature */
+        top: 8%;
+    }
+    #btnMensaje {
+        padding: 12px 28px;
+        font-size: 16px; /* Botón cómodo para el dedo en móviles */
+    }
+}
+
     </style>
 </head>
 <body>
